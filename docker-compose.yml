@@ -1,11 +1,41 @@
-version: '1'
+# Despliegue en EC2 (AWS Learner Lab): app Spring Boot + Oracle en contenedor.
+# Las credenciales AWS NO se inyectan: la app accede a S3 por el rol de instancia
+# (LabInstanceProfile) usando la cadena de credenciales por defecto del SDK.
 services:
-  microservicio:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    container_name: oracle-db
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-OraclePlat2026}
+      APP_USER: ${APP_USER:-plataforma}
+      APP_USER_PASSWORD: ${APP_USER_PASSWORD:-PlataPass2026}
+    volumes:
+      - oradata:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 90s
+    restart: unless-stopped
+
+  app:
+    image: ${APP_IMAGE:-dalvaes/plataforma-inscripciones:latest}
+    container_name: plataforma-inscripciones
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      SPRING_DATASOURCE_USERNAME: ${APP_USER:-plataforma}
+      SPRING_DATASOURCE_PASSWORD: ${APP_USER_PASSWORD:-PlataPass2026}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
     ports:
       - "8080:8080"
-    env_file:
-      - .env
-    restart: always
+    restart: unless-stopped
+
+volumes:
+  oradata:

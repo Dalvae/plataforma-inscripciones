@@ -4,10 +4,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 /**
  * Configura el cliente S3 (AWS SDK v2).
@@ -31,17 +34,19 @@ public class S3Config {
 
     @Bean
     public S3Client s3Client() {
-        StaticCredentialsProvider provider;
-        if (sessionToken != null && !sessionToken.isBlank()) {
-            provider = StaticCredentialsProvider.create(
-                    AwsSessionCredentials.create(accessKeyId, secretAccessKey, sessionToken));
+        S3ClientBuilder builder = S3Client.builder().region(Region.of(region));
+        boolean hasStatic = accessKeyId != null && !accessKeyId.isBlank()
+                && secretAccessKey != null && !secretAccessKey.isBlank();
+        if (hasStatic) {
+            AwsCredentials credentials = (sessionToken != null && !sessionToken.isBlank())
+                    ? AwsSessionCredentials.create(accessKeyId, secretAccessKey, sessionToken)
+                    : AwsBasicCredentials.create(accessKeyId, secretAccessKey);
+            builder.credentialsProvider(StaticCredentialsProvider.create(credentials));
         } else {
-            provider = StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create(accessKeyId, secretAccessKey));
+            // En EC2 sin credenciales estaticas: usa el rol de instancia (LabInstanceProfile)
+            // via el cadena por defecto del SDK (variables de entorno -> perfil -> IMDS).
+            builder.credentialsProvider(DefaultCredentialsProvider.create());
         }
-        return S3Client.builder()
-                .region(Region.of(region))
-                .credentialsProvider(provider)
-                .build();
+        return builder.build();
     }
 }

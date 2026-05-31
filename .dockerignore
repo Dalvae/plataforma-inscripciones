@@ -1,0 +1,9 @@
+target/
+.git/
+.github/
+.mvn/wrapper/maven-wrapper.jar
+*.pem
+*.ppk
+Wallet_*/
+.env
+HELP.md
