@@ -31,9 +31,9 @@ public class ResumenServiceImpl implements ResumenService {
                 .orElseThrow(() -> new NoSuchElementException("Resumen con numero " + numero + " no encontrado"));
     }
 
-    /** Carpeta = numero de resumen: {numero}/resumen-{numero}.pdf */
+    /** Todos los resumenes en una sola carpeta: resumenes/resumen-{numero}.pdf */
     private String buildKey(Long numero) {
-        return numero + "/resumen-" + numero + ".pdf";
+        return "resumenes/resumen-" + numero + ".pdf";
     }
 
     @Override

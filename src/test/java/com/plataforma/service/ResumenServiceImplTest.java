@@ -67,17 +67,17 @@ class ResumenServiceImplTest {
 
         String key = service.subirAS3(5L);
 
-        assertEquals("5/resumen-5.pdf", key);
-        verify(s3StorageService).subir(eq("5/resumen-5.pdf"), any(byte[].class), eq("application/pdf"));
-        assertEquals("5/resumen-5.pdf", resumen.getArchivoKey());
+        assertEquals("resumenes/resumen-5.pdf", key);
+        verify(s3StorageService).subir(eq("resumenes/resumen-5.pdf"), any(byte[].class), eq("application/pdf"));
+        assertEquals("resumenes/resumen-5.pdf", resumen.getArchivoKey());
         verify(resumenRepository).save(resumen);
     }
 
     @Test
     void descargarDeS3UsaArchivoKeyGuardada() {
-        resumen.setArchivoKey("5/resumen-5.pdf");
+        resumen.setArchivoKey("resumenes/resumen-5.pdf");
         when(resumenRepository.findById(5L)).thenReturn(Optional.of(resumen));
-        when(s3StorageService.descargar("5/resumen-5.pdf")).thenReturn(new byte[]{4, 5});
+        when(s3StorageService.descargar("resumenes/resumen-5.pdf")).thenReturn(new byte[]{4, 5});
 
         byte[] result = service.descargarDeS3(5L);
         assertArrayEquals(new byte[]{4, 5}, result);
@@ -89,18 +89,18 @@ class ResumenServiceImplTest {
         when(pdfService.generar(resumen)).thenReturn(new byte[]{1});
 
         String key = service.actualizarEnS3(5L);
-        assertEquals("5/resumen-5.pdf", key);
-        verify(s3StorageService).subir(eq("5/resumen-5.pdf"), any(byte[].class), eq("application/pdf"));
+        assertEquals("resumenes/resumen-5.pdf", key);
+        verify(s3StorageService).subir(eq("resumenes/resumen-5.pdf"), any(byte[].class), eq("application/pdf"));
     }
 
     @Test
     void borrarDeS3EliminaObjetoYLimpiaKey() {
-        resumen.setArchivoKey("5/resumen-5.pdf");
+        resumen.setArchivoKey("resumenes/resumen-5.pdf");
         when(resumenRepository.findById(5L)).thenReturn(Optional.of(resumen));
 
         service.borrarDeS3(5L);
 
-        verify(s3StorageService).borrar("5/resumen-5.pdf");
+        verify(s3StorageService).borrar("resumenes/resumen-5.pdf");
         assertNull(resumen.getArchivoKey());
         verify(resumenRepository).save(resumen);
     }
