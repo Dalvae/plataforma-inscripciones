@@ -47,8 +47,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/plataforma-inscripciones:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/plataforma-inscripciones:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/plataforma-inscripciones:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/plataforma-inscripciones:buildcache,mode=max
 
       - name: Setup SSH key
         run: |
